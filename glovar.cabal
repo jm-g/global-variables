@@ -1,0 +1,67 @@
+-- The name of the package.
+Name:                glovar
+
+Version:             0.1
+
+Synopsis:            Named global top-level mutable variables without unsafePerformIO 
+
+-- A longer description of the package.
+-- Description:         
+
+-- The license under which the package is released.
+License:             BSD3
+
+-- The file containing the license text.
+License-file:        LICENSE
+
+-- The package author(s).
+Author:              Jean-Marie Gaillourdet and Patrick Michel
+
+-- An email address to which users can send suggestions, bug reports,
+-- and patches.
+-- Maintainer:          
+
+-- A copyright notice.
+-- Copyright:           
+
+Category:            System
+
+Build-type:          Simple
+
+-- Extra files to be distributed with the package, such as examples or
+-- a README.
+-- Extra-source-files:  
+
+-- Constraint on the version of Cabal needed to build this package.
+Cabal-version:       >=1.2
+
+
+Library
+  -- Modules exported by the library.
+  Exposed-modules:   Data.Global
+  Hs-Source-Dirs:    src
+  
+  -- Packages needed in order to build this package.
+  Build-depends:       base >= 4
+                     , containers
+                     , stm
+  
+  -- Modules not exported by this package.
+  Other-modules:     Data.Global.Internal
+
+  Ghc-Options:       -threaded -Wall
+  
+Executable           runtests
+  Main-Is:           TestMain.hs
+  Hs-Source-Dirs:    src, test-src
+  Build-depends:       base >= 4
+                     , containers
+                     , stm
+                     , tskiplist == 0.0.*
+                     , QuickCheck == 2.4.*
+                     , test-framework == 0.4.*
+                     , test-framework-quickcheck2 == 0.2.*
+  Ghc-Options:       -threaded -Wall
+  if impl(ghc >= 7.0)
+    Ghc-Options:     -rtsopts
+
