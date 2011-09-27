@@ -35,29 +35,30 @@ Build-type:          Simple
 -- Constraint on the version of Cabal needed to build this package.
 Cabal-version:       >=1.2
 
+Flag test
+  Description:       enable the test suite
+  Default:           False
 
 Library
-  -- Modules exported by the library.
   Exposed-modules:   Data.Global
   Hs-Source-Dirs:    src
   
-  -- Packages needed in order to build this package.
   Build-depends:       base >= 4
-                     , containers
-                     , stm
+                     , containers == 0.4.*
   
-  -- Modules not exported by this package.
   Other-modules:     Data.Global.Internal
 
   Ghc-Options:       -threaded -Wall
   
 Executable           runtests
+  if flag(test)
+    Buildable:       True
+  else
+    Buildable:       False
   Main-Is:           TestMain.hs
   Hs-Source-Dirs:    src, test-src
   Build-depends:       base >= 4
-                     , containers
-                     , stm
-                     , tskiplist == 0.0.*
+                     , containers == 0.4.*
                      , QuickCheck == 2.4.*
                      , test-framework == 0.4.*
                      , test-framework-quickcheck2 == 0.2.*
