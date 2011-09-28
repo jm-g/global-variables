@@ -40,13 +40,14 @@ Flag test
   Default:           False
 
 Library
-  Exposed-modules:   Data.Global
+  Exposed-modules:     Data.Global
+                     , Data.Global.IORef
   Hs-Source-Dirs:    src
   
-  Build-depends:       base >= 4
-                     , containers == 0.4.*
+  Build-depends:       base >= 4 && 
+                     , containers >= 0.3 && < 0.5
   
-  Other-modules:     Data.Global.Internal
+  Other-modules:     Data.Global.Registry
 
   Ghc-Options:       -threaded -Wall
   
@@ -58,7 +59,7 @@ Executable           runtests
   Main-Is:           TestMain.hs
   Hs-Source-Dirs:    src, test-src
   Build-depends:       base >= 4
-                     , containers == 0.4.*
+                     , containers >= 0.3 && < 0.5
                      , QuickCheck == 2.4.*
                      , test-framework == 0.4.*
                      , test-framework-quickcheck2 == 0.2.*
