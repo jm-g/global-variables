@@ -11,11 +11,21 @@ import Data.Global.IORef as G
 (<==>) ::  Bool -> Bool -> Bool
 x <==> y = (x && y) || (not x && not y)
 
+(===>) ::  Bool -> Bool -> Bool
+x ===> y = (not x) || y
+
+
 prop_pure_declare :: String -> Bool
 prop_pure_declare n = declare n == declare n
 
 prop_bijective_declare :: String -> String -> Bool
 prop_bijective_declare n1 n2 = (n1 == n2) <==> (declare n1 == declare n2)
+
+prop_bijective_declare_forward :: String -> String -> Bool
+prop_bijective_declare_forward n1 n2 = (n1 == n2) ===> (declare n1 == declare n2)
+
+prop_bijective_declare_backward :: String -> String -> Bool
+prop_bijective_declare_backward n1 n2 = (declare n1 == declare n2) ===> (n1 == n2) 
 
 prop_writeread :: String -> Integer -> Property
 prop_writeread n z = monadicIO $
@@ -42,6 +52,8 @@ tests ::  Test
 tests = testGroup "Data.Global.IORef"
     [ testProperty "declare is pure" prop_pure_declare
     , testProperty "declare is a bijective function" prop_bijective_declare
+    , testProperty "declare is a bijective function (forward)" prop_bijective_declare_forward
+    , testProperty "declare is a bijective function (backward)" prop_bijective_declare_backward
     , testProperty "basic write/read test" prop_writeread
     , testProperty "write/read with interference test" prop_wwr
     ]
