@@ -30,10 +30,12 @@ Flag test
 Library
   Exposed-modules:    Data.Global
                     , Data.Global.IORef
+                    , Data.Global.TVar
   Hs-Source-Dirs:   src
   
   Build-depends:      base >= 4
                     , containers >= 0.3 && < 0.5
+                    , stm >= 2.1 && < 2.2
   
   Other-modules:    Data.Global.Registry
 
