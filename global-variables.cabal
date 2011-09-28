@@ -32,7 +32,7 @@ Library
                     , Data.Global.IORef
   Hs-Source-Dirs:   src
   
-  Build-depends:      base >= 4 &&
+  Build-depends:      base >= 4
                     , containers >= 0.3 && < 0.5
   
   Other-modules:    Data.Global.Registry

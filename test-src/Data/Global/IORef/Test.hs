@@ -1,11 +1,11 @@
-module Data.Global.Test where
+module Data.Global.IORef.Test where
 
 import Test.QuickCheck
 import Test.QuickCheck.Monadic
 import Test.Framework
 import Test.Framework.Providers.QuickCheck2
 
-import Data.Global as G
+import Data.Global.IORef as G
 
 (<==>) ::  Bool -> Bool -> Bool
 x <==> y = (x && y) || (not x && not y)
@@ -35,7 +35,7 @@ prop_wwr n1 n2 z1 z2 = z1 /= z2 ==> monadicIO $
     }
 
 tests ::  Test
-tests = testGroup "Data.Global"
+tests = testGroup "Data.Global.IORef"
     [ testProperty "declare is pure" prop_pure_declare
     , testProperty "declare is a bijective function" prop_bijective_declare
     , testProperty "basic write/read test" prop_writeread
