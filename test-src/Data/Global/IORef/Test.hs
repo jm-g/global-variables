@@ -51,10 +51,13 @@ prop_wwr n1' n2' z1 z2 = z1 /= z2 ==> monadicIO $
 tests ::  Test
 tests = testGroup "Data.Global.IORef"
     [ testProperty "declare is pure" prop_pure_declare
+    --   testProperty "declare is a bijective function" prop_bijective_declare
     , testProperty "declare is a bijective function" prop_bijective_declare
+      -- testProperty "declare is a bijective function (forward)" prop_bijective_declare_forward
     , testProperty "declare is a bijective function (forward)" prop_bijective_declare_forward
+    --   testProperty "declare is a bijective function (backward)" prop_bijective_declare_backward
     , testProperty "declare is a bijective function (backward)" prop_bijective_declare_backward
-    , testProperty "basic write/read test" prop_writeread
-    , testProperty "write/read with interference test" prop_wwr
+--    , testProperty "basic write/read test" prop_writeread
+--    , testProperty "write/read with interference test" prop_wwr
     ]
 

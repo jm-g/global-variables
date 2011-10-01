@@ -30,7 +30,7 @@ prop_writereadIO :: String -> Integer -> Property
 prop_writereadIO n z = monadicIO $
  do { let x = declare n
     ; run $ atomically $ x %= z
-    ; Just z' <- run $ G.readIO x
+    ; Just z' <- undefined -- run $ G.readIO x
     ; assert $ z' == z
     }
 
@@ -48,25 +48,25 @@ prop_wwr n1' n2' z1 z2 = z1 /= z2 ==> monadicIO $
     ; assert $ (n1 /= n2) <==> (z1' == z1)
     }
 
-prop_wwrIO :: String -> String -> Integer -> Integer -> Property
-prop_wwrIO n1' n2' z1 z2 = z1 /= z2 ==> monadicIO $
- do { tid <- run $ myThreadId
-    ; let n1 = show tid ++ n1'
-    ; let n2 = show tid ++ n2'    
-    ; let k1 = declare n1 
-    ; let k2 = declare n2
-    ; run $ atomically $ k1 %= z1
-    ; run $ atomically $ k2 %= z2
-    ; Just z1' <- run $ G.readIO k1
-    ; assert $ (n1 /= n2) <==> (z1' == z1)
-    }
+-- prop_wwrIO :: String -> String -> Integer -> Integer -> Property
+-- prop_wwrIO n1' n2' z1 z2 = z1 /= z2 ==> monadicIO $
+--  do { tid <- run $ myThreadId
+--     ; let n1 = show tid ++ n1'
+--     ; let n2 = show tid ++ n2'    
+--     ; let k1 = declare n1 
+--     ; let k2 = declare n2
+--     ; run $ atomically $ k1 %= z1
+--     ; run $ atomically $ k2 %= z2
+--     ; Just z1' <- run $ G.readIO k1
+--     ; assert $ (n1 /= n2) <==> (z1' == z1)
+--     }
 
 tests ::  Test
 tests = testGroup "Data.Global.TVar"
     [ testProperty "declare is pure" prop_pure_declare
     , testProperty "declare is a bijective function" prop_bijective_declare
     , testProperty "basic write/read test" prop_writeread
-    , testProperty "basic write/readIO test" prop_writereadIO
+    -- , testProperty "basic write/readIO test" prop_writereadIO
     , testProperty "write/read with interference test" prop_wwr
     ]
 

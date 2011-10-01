@@ -49,6 +49,7 @@ import System.IO.Unsafe    ( unsafePerformIO )
 
 import Prelude      hiding (read)
 
+import Data.Global.IORef.Internal
 import Data.Global.Registry
 
 
@@ -80,28 +81,17 @@ import Data.Global.Registry
 
 
 
--- ---------------------
--- -- GLOBAL REGISTRY --
--- ---------------------
-
-
-{-# NOINLINE globalRegistry #-}
-globalRegistry :: Registry Cell
-globalRegistry = unsafePerformIO setupRegistryIO
--- INV: This MVar must never be an empty MVar!
--- Although it may point to an empty map.
-
-
-newtype Cell = Cell (IORef Dynamic)
-  deriving (Eq, Typeable)
-
 -- -----------------------
 -- -- EXPOSED FUNCTIONS --
 -- -----------------------
 
-
+{-# NOINLINE lookupGVar #-}
 lookupGVar :: String -> Cell
-lookupGVar = unsafePerformIO . lookupIO Cell newIORef globalRegistry
+lookupGVar = unsafePerformIO . lkIO
+  
+{-# NOINLINE lkIO #-}
+lkIO :: String -> IO Cell
+lkIO = lookupIO Cell newIORef globalRegistry
 
 
 allKeys :: IO [String]
@@ -143,7 +133,19 @@ newtype GVar a = GVar Cell
 declare
     :: String -- ^ logical name 
     -> GVar a -- ^ the global variable identified by the logical name
-declare = GVar . lookupGVar
+-- declare = GVar . lookupGVar
+declare n
+    | c1 == c2  = c1
+    | otherwise = declare n
+  where
+    c1 = declare' n
+    c2 = declare'' n
+
+    
+{-# NOINLINE declare' #-}
+declare' = GVar . lookupGVar
+{-# NOINLINE declare'' #-}
+declare'' = GVar . lookupGVar
 
 
 -- | 'declareT' declares the existence of a 'GVar', effectively

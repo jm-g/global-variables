@@ -26,7 +26,7 @@ module Data.Global.TVar (
   , read
   , write
   , (%=)
-  , Data.Global.TVar.readIO
+  -- , Data.Global.TVar.readIO
   -- * Cost Model
   -- $costModel
   
@@ -36,7 +36,7 @@ module Data.Global.TVar (
 
 import Control.Applicative    ( (<$>) )
 import Control.Concurrent.STM ( STM, TVar, newTVarIO, readTVar, writeTVar
-                              , readTVarIO )
+                              {- , readTVarIO -} )
 import Data.Dynamic           ( Typeable, Dynamic, fromDynamic, toDyn )
 import System.IO.Unsafe       ( unsafePerformIO )
                                    
@@ -136,11 +136,11 @@ read (GVar (Cell k)) = fromDynamic <$> readTVar k
 -- | 'read' reads the value of a GVar. 'Nothing' is returned if this
 -- variable was never written, 'unset' was called, or the stored value
 -- has the wrong type. 
-readIO
-    :: Typeable a 
-    => GVar a -- ^ the variable to be read 
-    -> IO (Maybe a) -- ^ the value stored
-readIO (GVar (Cell k)) = fromDynamic <$> readTVarIO k
+-- readIO
+--     :: Typeable a 
+--     => GVar a -- ^ the variable to be read 
+--     -> IO (Maybe a) -- ^ the value stored
+-- readIO (GVar (Cell k)) = fromDynamic <$> readTVarIO k
 
 
 -- Fehlerbehandlung oder implizites Anlegen?
