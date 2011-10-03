@@ -2,11 +2,9 @@ module Data.Global.Registry where
 
 import Control.Applicative ((<$>))
 import Control.Concurrent.MVar
-import Control.Exception.Base
 import Data.Dynamic
 import Data.Map as M
 import GHC.Conc (pseq)
-import System.IO.Unsafe (unsafePerformIO)
 
 
 

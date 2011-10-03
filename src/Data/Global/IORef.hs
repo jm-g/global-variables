@@ -49,7 +49,7 @@ import System.IO.Unsafe    ( unsafePerformIO )
 
 import Prelude      hiding (read)
 
-import Data.Global.IORef.Internal
+-- import Data.Global.IORef.Internal
 import Data.Global.Registry
 
 
@@ -78,6 +78,21 @@ import Data.Global.Registry
 -- [1]: http://hackage.haskell.org/packages/archive/stm/2.2.0.1/doc/html/Control-Concurrent-STM-TMVar.html#v:readTMVar
 
 
+-- ---------------------
+-- -- GLOBAL REGISTRY --
+-- ---------------------
+
+
+{-# NOINLINE globalRegistry #-}
+globalRegistry :: Registry Cell
+globalRegistry = unsafePerformIO setupRegistryIO
+-- INV: This MVar must never be an empty MVar!
+-- Although it may point to an empty map.
+
+
+newtype Cell = Cell (IORef Dynamic)
+    deriving (Eq, Typeable)
+
 
 
 
@@ -85,17 +100,9 @@ import Data.Global.Registry
 -- -- EXPOSED FUNCTIONS --
 -- -----------------------
 
-{-# NOINLINE lookupGVar #-}
 lookupGVar :: String -> Cell
-lookupGVar = unsafePerformIO . lkIO
-  
-{-# NOINLINE lkIO #-}
-lkIO :: String -> IO Cell
-lkIO = lookupIO Cell newIORef globalRegistry
+lookupGVar = unsafePerformIO . lookupIO Cell newIORef globalRegistry
 
-
-allKeys :: IO [String]
-allKeys = undefined
 
 -- ----------
 -- -- GVar --
@@ -141,7 +148,8 @@ declare n
     c1 = declare' n
     c2 = declare'' n
 
-    
+
+declare', declare'' :: String -> GVar a
 {-# NOINLINE declare' #-}
 declare' = GVar . lookupGVar
 {-# NOINLINE declare'' #-}
