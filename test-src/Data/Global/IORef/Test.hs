@@ -12,7 +12,7 @@ import Data.Global.IORef as G
 x <==> y = (x && y) || (not x && not y)
 
 (===>) ::  Bool -> Bool -> Bool
-x ===> y = (not x) || y
+x ===> y = not x || y
 
 
 prop_pure_declare :: String -> Bool
@@ -37,7 +37,7 @@ prop_writeread n z = monadicIO $
 
 prop_wwr :: String -> String -> Integer -> Integer -> Property
 prop_wwr n1' n2' z1 z2 = z1 /= z2 ==> monadicIO $
- do { tid <- run $ myThreadId
+ do { tid <- run myThreadId
     ; let n1 = show tid ++ n1'
     ; let n2 = show tid ++ n2'
     ; let k1 = declare n1

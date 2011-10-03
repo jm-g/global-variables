@@ -199,10 +199,10 @@ write (GVar (Cell k)) val = writeIORef k (toDyn val)
     -> IO ()
 (%=) = write
 
-modify :: Typeable a => (GVar a) -> (Maybe a -> a) -> IO ()
+modify :: Typeable a => GVar a -> (Maybe a -> a) -> IO ()
 modify (GVar (Cell k)) f = modifyIORef k (toDyn . f . fromDynamic)
 
-atomicModify :: Typeable a => (GVar a) -> (Maybe a -> (a, b)) -> IO b
+atomicModify :: Typeable a => GVar a -> (Maybe a -> (a, b)) -> IO b
 atomicModify (GVar (Cell k)) f = atomicModifyIORef k 
                                     (first toDyn . f . fromDynamic)
 

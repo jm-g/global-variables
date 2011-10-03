@@ -13,7 +13,7 @@ newtype Cell = Cell (IORef Dynamic)
   deriving Eq
 
 (===>) ::  Bool -> Bool -> Bool
-x ===> y = (not x) || y
+x ===> y = not x || y
 
 
 prop_idempotent_lookupIO :: String -> Property

@@ -21,7 +21,7 @@ setupRegistryIO = m `pseq` newMVar m
 
 lookupIO :: (ref Dynamic -> cell)            -- GVar 
          -> (Dynamic -> IO (ref Dynamic))    -- newIORef
-         -> (Registry cell) 
+         -> Registry cell 
          -> String 
          -> IO cell
 lookupIO wrapper maker registry name = modifyMVar registry lkup
@@ -36,7 +36,7 @@ lookupIO wrapper maker registry name = modifyMVar registry lkup
     lkup reg = case M.lookup name reg of
         Just k' -> return (reg, k')
         Nothing -> do
-            k' <- wrapper <$> (maker $ toDyn ())
+            k' <- wrapper <$> maker (toDyn ())
             return (M.insert name k' reg, k')
 
 

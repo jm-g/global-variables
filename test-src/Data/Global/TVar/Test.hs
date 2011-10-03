@@ -37,7 +37,7 @@ prop_writereadIO n z = monadicIO $
 
 prop_wwr :: String -> String -> Integer -> Integer -> Property
 prop_wwr n1' n2' z1 z2 = z1 /= z2 ==> monadicIO $
- do { tid <- run $ myThreadId
+ do { tid <- run myThreadId
     ; let n1 = show tid ++ n1'
     ; let n2 = show tid ++ n2'    
     ; let k1 = declare n1
