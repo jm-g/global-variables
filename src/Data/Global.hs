@@ -1,8 +1,8 @@
 module Data.Global (
-    module Data.Global.IORef
+    module Data.Global.Registry
 ) where
 
-import Data.Global.IORef
+import Data.Global.Registry
 
 
 

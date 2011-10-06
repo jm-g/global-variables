@@ -1,1 +1,1 @@
-while dist/build/runtests/runtests  -j 4 +RTS -N ; do echo; done
+while dist/build/runtests/runtests -t forward -a 1 -j 4 +RTS -N ; do echo; done
