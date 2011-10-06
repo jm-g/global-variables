@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE CPP, ScopedTypeVariables #-}
 module Data.Global.Registry (
     declareIORef, declareMVar, declareTVar
 
@@ -16,9 +16,11 @@ import GHC.Conc (pseq)
 import System.IO.Unsafe
 
 
-
+#if __GLASGOW_HASKELL__ >= 702
 type Registry = Map (TypeRep,String) Dynamic
-
+#else
+type Registry = Map (Int,String) Dynamic
+#endif
 
 setupRegistry :: IO (MVar Registry)
 setupRegistry = m `pseq` newMVar m
@@ -36,6 +38,7 @@ globalRegistry = m `pseq` unsafePerformIO (newMVar m)
 
 -- TODO: add a proper assertion explaining the problem
 
+
 lookupOrInsert
     :: forall a. forall ref. (Typeable a, Typeable1 ref)
     => MVar Registry
@@ -48,16 +51,32 @@ lookupOrInsert registry new name val
 lookupOrInsert registry new name val = modifyMVar registry lkup
   where
     typ = typeOf val
+    err exp got = error $ "Data.Global.Registry: Invariant violation\n"
+                       ++ "expected: " ++ show exp ++ "\n"
+                       ++ "got: " ++ show got ++ "\n" 
 
+#if __GLASGOW_HASKELL__ >= 702
     lkup :: Registry -> IO (Registry, ref a)
     lkup reg = case M.lookup (typ, name) reg of
-        Just ref -> return (reg, fromDyn ref err)
+        Just ref -> return (reg, fromDyn ref (err typ (dynTypeRep ref)))
         Nothing -> 
          do { ref <- new val
             ; return (M.insert (typ, name) (toDyn ref) reg, ref)
             }
-    err = error "Data.Global.Registry: Invariant violation"
-{-# INLINE lookupOrInsert #-}
+#else
+    lkup :: Registry -> IO (Registry, ref a)
+    lkup reg = 
+     do { typIdx <- typeRepKey typ 
+        ; case M.lookup (typIdx, name) reg of
+            Just ref -> return (reg, fromDyn ref (err typ (dynTypeRep ref)))
+            Nothing -> 
+             do { ref <- new val
+                ; return (M.insert (typIdx, name) (toDyn ref) reg, ref)
+                }
+        }
+#endif
+
+{-# NOINLINE lookupOrInsert #-}
 
 
 lookupOrInsertIORef
