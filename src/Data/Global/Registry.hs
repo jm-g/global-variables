@@ -51,8 +51,8 @@ lookupOrInsert registry new name val
     | registry `pseq` new `pseq` name `pseq` val `pseq` False = undefined
 lookupOrInsert registry new name val = modifyMVar registry lkup
   where
-    err exp got = error $ "Data.Global.Registry: Invariant violation\n"
-                       ++ "expected: " ++ show exp ++ "\n"
+    err ex got = error $ "Data.Global.Registry: Invariant violation\n"
+                       ++ "expected: " ++ show ex ++ "\n"
                        ++ "got: " ++ show got ++ "\n" 
 
 #if __GLASGOW_HASKELL__ >= 702
@@ -80,6 +80,9 @@ lookupOrInsert registry new name val = modifyMVar registry lkup
                 }
         }
 
+
+-- Ugly workaround to http://hackage.haskell.org/trac/ghc/ticket/5540
+typeOf', typeOf'', typeOf''':: Typeable a => a -> TypeRep
 typeOf' val
     | t1 == t2 = t1
     | otherwise = typeOf' val
@@ -126,58 +129,31 @@ lookupOrInsertTVar = lookupOrInsert globalRegistry newTVarIO
 
 
 
-declareIORef, declareIORef', declareIORef''
+declareIORef
     :: Typeable a
     => String
     -> a
     -> (IORef a)
-declareIORef name val
-    | res1 == res2 = res1
-    | otherwise    = declareIORef name val
-  where
-    res1 = declareIORef' name val
-    res2 = declareIORef'' name val
-
-declareIORef' name val = unsafePerformIO $ lookupOrInsertIORef name val
-{-# NOINLINE declareIORef' #-}
-
-declareIORef'' name val = unsafePerformIO $ lookupOrInsertIORef name val
-{-# NOINLINE declareIORef'' #-}
+declareIORef name val = unsafePerformIO $ lookupOrInsertIORef name val
+{-# NOINLINE declareIORef #-}
 
 
 
-declareMVar, declareMVar', declareMVar''
+
+declareMVar
     :: Typeable a
     => String
     -> a
     -> (MVar a)
-declareMVar name val
-    | res1 == res2 = res1
-    | otherwise    = declareMVar name val
-  where
-    res1 = declareMVar' name val
-    res2 = declareMVar'' name val
-
-declareMVar' name val = unsafePerformIO $ lookupOrInsertMVar name val
-{-# NOINLINE declareMVar' #-}
-declareMVar'' name val = unsafePerformIO $ lookupOrInsertMVar name val
-{-# NOINLINE declareMVar'' #-}
+declareMVar name val = unsafePerformIO $ lookupOrInsertMVar name val
+{-# NOINLINE declareMVar #-}
 
 
 
-declareTVar, declareTVar', declareTVar''
+declareTVar
     :: Typeable a
     => String
     -> a
     -> (TVar a)
-declareTVar name val
-    | res1 == res2 = res1
-    | otherwise    = declareTVar name val
-  where
-    res1 = declareTVar' name val
-    res2 = declareTVar'' name val
-
-declareTVar' name val = unsafePerformIO $ lookupOrInsertTVar name val
-{-# NOINLINE declareTVar' #-}
-declareTVar'' name val = unsafePerformIO $ lookupOrInsertTVar name val
-{-# NOINLINE declareTVar'' #-}
+declareTVar name val = unsafePerformIO $ lookupOrInsertTVar name val
+{-# NOINLINE declareTVar #-}
