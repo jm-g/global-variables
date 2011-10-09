@@ -8,6 +8,7 @@ module Data.Global.Registry (
 
 import Control.Concurrent.MVar
 import Control.Concurrent.STM
+import Control.Exception
 import Data.IORef
 import Data.Dynamic
 import Data.Map as M
@@ -50,12 +51,13 @@ lookupOrInsert registry new name val
     | registry `pseq` new `pseq` name `pseq` val `pseq` False = undefined
 lookupOrInsert registry new name val = modifyMVar registry lkup
   where
-    typ = typeOf val
     err exp got = error $ "Data.Global.Registry: Invariant violation\n"
                        ++ "expected: " ++ show exp ++ "\n"
                        ++ "got: " ++ show got ++ "\n" 
 
 #if __GLASGOW_HASKELL__ >= 702
+    typ = typeOf val
+
     lkup :: Registry -> IO (Registry, ref a)
     lkup reg = case M.lookup (typ, name) reg of
         Just ref -> return (reg, fromDyn ref (err typ (dynTypeRep ref)))
@@ -64,6 +66,8 @@ lookupOrInsert registry new name val = modifyMVar registry lkup
             ; return (M.insert (typ, name) (toDyn ref) reg, ref)
             }
 #else
+    typ = typeOf' val
+
     lkup :: Registry -> IO (Registry, ref a)
     lkup reg = 
      do { typIdx <- typeRepKey typ 
@@ -71,9 +75,25 @@ lookupOrInsert registry new name val = modifyMVar registry lkup
             Just ref -> return (reg, fromDyn ref (err typ (dynTypeRep ref)))
             Nothing -> 
              do { ref <- new val
+                ; _ <- evaluate $ typeOf' ref
                 ; return (M.insert (typIdx, name) (toDyn ref) reg, ref)
                 }
         }
+
+typeOf' val
+    | t1 == t2 = t1
+    | otherwise = typeOf' val
+  where
+    t1 = typeOf'' val
+    t2 = typeOf''' val
+{-# NOINLINE typeOf' #-}
+
+
+typeOf'' x = typeOf x
+{-# NOINLINE typeOf'' #-}
+typeOf''' x = typeOf x
+{-# NOINLINE typeOf''' #-}
+
 #endif
 
 {-# NOINLINE lookupOrInsert #-}
