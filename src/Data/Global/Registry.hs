@@ -67,36 +67,31 @@ lookupOrInsert registry new name val = modifyMVar registry lkup
             ; return (M.insert (typ, name) (toDyn ref) reg, ref)
             }
 #else
-    typ = typeOf' val
-
     lkup :: Registry -> IO (Registry, ref a)
     lkup reg = 
-     do { typIdx <- typeRepKey typ 
+     do { typ <- typeOf' val
+        ; typIdx <- typeRepKey typ
         ; case M.lookup (typIdx, name) reg of
             Just ref -> return (reg, fromDyn ref (err typ (dynTypeRep ref)))
             Nothing -> 
              do { ref <- new val
-                ; _ <- evaluate $ typeOf' ref
+                ; _ <- typeOf' ref
                 ; return (M.insert (typIdx, name) (toDyn ref) reg, ref)
                 }
         }
 
+{-# NOINLINE lock #-}
+lock :: MVar ()
+lock = unsafePerformIO $ newMVar ()
 
 -- Ugly workaround to http://hackage.haskell.org/trac/ghc/ticket/5540
-typeOf', typeOf'', typeOf''':: Typeable a => a -> TypeRep
-typeOf' val
-    | t1 == t2 = t1
-    | otherwise = typeOf' val
-  where
-    t1 = typeOf'' val
-    t2 = typeOf''' val
-{-# NOINLINE typeOf' #-}
-
-
-typeOf'' x = typeOf x
-{-# NOINLINE typeOf'' #-}
-typeOf''' x = typeOf x
-{-# NOINLINE typeOf''' #-}
+typeOf' :: Typeable a => a -> IO TypeRep
+typeOf' x =
+ do { () <- takeMVar lock
+    ; t <- evaluate $ typeOf x
+    ; putMVar lock ()
+    ; return t
+    }
 
 #endif
 
