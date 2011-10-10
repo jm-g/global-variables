@@ -23,6 +23,7 @@ type Registry = Map (TypeRep,String) Dynamic
 type Registry = Map (Int,String) Dynamic
 #endif
 
+-- | Test helper
 setupRegistry :: IO (MVar Registry)
 setupRegistry = m `pseq` newMVar m
   where
@@ -39,7 +40,7 @@ globalRegistry = m `pseq` unsafePerformIO (newMVar m)
 
 -- TODO: add a proper assertion explaining the problem
 
-
+-- | Exposed for unit testing
 lookupOrInsert
     :: forall a. forall ref. (Typeable a, Typeable1 ref)
     => MVar Registry
@@ -111,12 +112,14 @@ lookupOrInsertIORef = lookupOrInsert globalRegistry newIORef
 {-# NOINLINE lookupOrInsertIORef #-}
 
 
+
 lookupOrInsertMVar
     :: Typeable a
     => String
     -> a
     -> IO (MVar a)
 lookupOrInsertMVar = lookupOrInsert globalRegistry newMVar
+{-# NOINLINE lookupOrInsertMVar #-}
 
 
 
@@ -126,6 +129,7 @@ lookupOrInsertTVar
     -> a
     -> IO (TVar a)
 lookupOrInsertTVar = lookupOrInsert globalRegistry newTVarIO
+{-# NOINLINE lookupOrInsertTVar #-}
 
 
 
@@ -136,7 +140,6 @@ declareIORef
     -> (IORef a)
 declareIORef name val = unsafePerformIO $ lookupOrInsertIORef name val
 {-# NOINLINE declareIORef #-}
-
 
 
 
