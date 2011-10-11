@@ -34,9 +34,9 @@ import System.IO.Unsafe
 
 
 #if __GLASGOW_HASKELL__ >= 702
-type Registry = Map (TypeRep,String) Dynamic
+type Registry = Map (TypeRep,TypeRep,String) Dynamic
 #else
-type Registry = Map (Int,String) Dynamic
+type Registry = Map (Int,Int,String) Dynamic
 #endif
 
 -- | Test helper
@@ -73,27 +73,31 @@ lookupOrInsert registry new name val = modifyMVar registry lkup
                        ++ "got: " ++ show got ++ "\n"
 
 #if __GLASGOW_HASKELL__ >= 702
-    typ = typeOf val
+    typVal = typeOf val
+    typRef = typeOf (undefined :: ref ()) -- TypeRep representing the reference, e.g. IORef,
+                                          -- MVar
 
     lkup :: Registry -> IO (Registry, ref a)
-    lkup reg = case M.lookup (typ, name) reg of
-        Just ref -> return (reg, fromDyn ref (err typ (dynTypeRep ref)))
+    lkup reg = case M.lookup (typRef, typVal, name) reg of
+        Just ref -> return (reg, fromDyn ref (err typVal (dynTypeRep ref)))
         Nothing ->
          do { ref <- new val
-            ; return (M.insert (typ, name) (toDyn ref) reg, ref)
+            ; return (M.insert (typRef, typVal, name) (toDyn ref) reg, ref)
             }
 #else
-    typ = typeOf' val
-
     lkup :: Registry -> IO (Registry, ref a)
     lkup reg =
-     do { typIdx <- typeRepKey typ
-        ; case M.lookup (typIdx, name) reg of
-            Just ref -> return (reg, fromDyn ref (err typ (dynTypeRep ref)))
+     do { typVal <- evaluate $ typeOf' val
+        ; typRef <- evaluate $ typeOf' (undefined :: ref ()) -- TypeRep representing the
+                                                             -- reference, e.g. IORef, MVar
+        ; typValIdx <- typeRepKey typVal
+        ; typRefIdx <- typeRepKey typRef
+        ; case M.lookup (typRefIdx, typValIdx, name) reg of
+            Just ref -> return (reg, fromDyn ref (err typVal (dynTypeRep ref)))
             Nothing ->
              do { ref <- new val
                 ; _ <- evaluate $ typeOf' ref
-                ; return (M.insert (typIdx, name) (toDyn ref) reg, ref)
+                ; return (M.insert (typRefIdx, typValIdx, name) (toDyn ref) reg, ref)
                 }
         }
 
