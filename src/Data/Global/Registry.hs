@@ -1,14 +1,30 @@
+-- -*- encoding: utf-8; fill-column: 95 -*-
+
 {-# LANGUAGE CPP, ScopedTypeVariables #-}
+-----------------------------------------------------------------------------------------------
+-- |
+-- Module        : Data.Global.Registry
+-- Creation Date : 2011-09-01
+-- Authors       : Jean-Marie Gaillourdet <jmg@gaillourdet.net>
+-- License       : BSD-style
+-- Portability   : all
+--
+-- The internal module.
+-----------------------------------------------------------------------------------------------
 module Data.Global.Registry (
+  -- * Public Interface
     declareIORef, declareMVar, declareTVar
 
+  -- * Private Testing Interface
   , lookupOrInsert
   , setupRegistry
 ) where
 
+#if __GLASGOW_HASKELL__ < 702
+import Control.Exception       ( evaluate )
+#endif
 import Control.Concurrent.MVar
 import Control.Concurrent.STM
-import Control.Exception
 import Data.IORef
 import Data.Dynamic
 import Data.Map as M
@@ -54,7 +70,7 @@ lookupOrInsert registry new name val = modifyMVar registry lkup
   where
     err ex got = error $ "Data.Global.Registry: Invariant violation\n"
                        ++ "expected: " ++ show ex ++ "\n"
-                       ++ "got: " ++ show got ++ "\n" 
+                       ++ "got: " ++ show got ++ "\n"
 
 #if __GLASGOW_HASKELL__ >= 702
     typ = typeOf val
@@ -62,7 +78,7 @@ lookupOrInsert registry new name val = modifyMVar registry lkup
     lkup :: Registry -> IO (Registry, ref a)
     lkup reg = case M.lookup (typ, name) reg of
         Just ref -> return (reg, fromDyn ref (err typ (dynTypeRep ref)))
-        Nothing -> 
+        Nothing ->
          do { ref <- new val
             ; return (M.insert (typ, name) (toDyn ref) reg, ref)
             }
@@ -70,11 +86,11 @@ lookupOrInsert registry new name val = modifyMVar registry lkup
     typ = typeOf' val
 
     lkup :: Registry -> IO (Registry, ref a)
-    lkup reg = 
-     do { typIdx <- typeRepKey typ 
+    lkup reg =
+     do { typIdx <- typeRepKey typ
         ; case M.lookup (typIdx, name) reg of
             Just ref -> return (reg, fromDyn ref (err typ (dynTypeRep ref)))
-            Nothing -> 
+            Nothing ->
              do { ref <- new val
                 ; _ <- evaluate $ typeOf' ref
                 ; return (M.insert (typIdx, name) (toDyn ref) reg, ref)
@@ -132,31 +148,63 @@ lookupOrInsertTVar = lookupOrInsert globalRegistry newTVarIO
 {-# NOINLINE lookupOrInsertTVar #-}
 
 
-
+-- | @declareIORef name val@ maps a variable name to an 'IORef'. Calling it multiple times with the same
+-- @name@ and type of 'val' will always return the same 'IORef'.
+--
+-- @
+-- someVar :: IORef Int
+-- someVar = declareMVar \"my-global-some-var\" 0
+-- @
+--
+-- Note, there is /no/ need to use 'unsafePerformIO' or to add a @{-\# NOINLINE someVar \#-}@
+-- pragma in order to define top-level 'IORef's.
 declareIORef
     :: Typeable a
-    => String
-    -> a
-    -> (IORef a)
+    => String     -- ^ The identifying name
+    -> a          -- ^ The initial value of the 'IORef', it may or may not be used.
+    -> (IORef a)  -- ^ A unique 'IORef' determined by @(name, typeOf val)@. Whether it refers
+                  -- to the given initial value or not is unspecified.
 declareIORef name val = unsafePerformIO $ lookupOrInsertIORef name val
 {-# NOINLINE declareIORef #-}
 
 
 
+-- | @declareMVar name val@ maps a variable name to an 'MVar'. Calling it multiple times with the same
+-- @name@ and type of 'val' will always return the same 'MVar'.
+--
+-- @
+-- someVar :: MVar Int
+-- someVar = declareMVar \"my-global-some-var\" 0
+-- @
+--
+-- Note, there is /no/ need to use 'unsafePerformIO' or to add a @{-\# NOINLINE someVar \#-}@
+-- pragma in order to define top-level 'MVar's.
 declareMVar
     :: Typeable a
-    => String
-    -> a
-    -> (MVar a)
+    => String    -- ^ The identifying name
+    -> a         -- ^ The initial value of the 'MVar', it may or may not be used.
+    -> (MVar a)  -- ^ A unique 'MVar' determined by @(name, typeOf val)@. Whether it refers to
+                 -- the given initial value or not is unspecified.
 declareMVar name val = unsafePerformIO $ lookupOrInsertMVar name val
 {-# NOINLINE declareMVar #-}
 
 
 
+-- | @declareTVar name val@ maps a variable name to an 'TVar'. Calling it multiple times with the same
+-- @name@ and type of 'val' will always return the same 'TVar'.
+--
+-- @
+-- someVar :: TVar Int
+-- someVar = declareMVar \"my-global-some-var\" 0
+-- @
+--
+-- Note, there is /no/ need to use 'unsafePerformIO' or to add a @{-\# NOINLINE someVar \#-}@
+-- pragma in order to define top-level 'TVar's.
 declareTVar
     :: Typeable a
-    => String
-    -> a
-    -> (TVar a)
+    => String    -- ^ The identifying name
+    -> a         -- ^ The initial value of the 'TVar', it may or may not be used.
+    -> (TVar a)  -- ^ A unique 'TVar' determined by @(name, typeOf val)@. Whether it refers to
+                 -- the given initial value or not is unspecified.
 declareTVar name val = unsafePerformIO $ lookupOrInsertTVar name val
 {-# NOINLINE declareTVar #-}
