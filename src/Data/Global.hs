@@ -72,6 +72,9 @@ import Data.Global.Registry
 
 
 -- $namespace
+-- The types of variables: @'IORef' a@, @'MVar' a@, and @'TVar' a@ create separate
+-- namespaces. I.e. A variable of type @'IORef' 'Int'@ and one of type @'MVar' 'Int'@ can both
+-- exist with the same name.
 
 
 
@@ -87,4 +90,4 @@ import Data.Global.Registry
 --
 -- @someVar1@ and @someVar2@ are guaranteed to always denote the exact same 'IORef', but it is
 -- unspecified whether the first read access to that 'IORef' returns @0@ or @1@. It can even
--- have any other initial value if it is accessed from some other part of the program.
+-- have any other initial value if it is also accessed from some other part of the program.
