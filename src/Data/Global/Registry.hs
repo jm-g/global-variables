@@ -108,9 +108,10 @@ lock = unsafePerformIO $ newMVar ()
 -- Ugly workaround to http://hackage.haskell.org/trac/ghc/ticket/5540
 typeOf' :: Typeable a => a -> IO TypeRep
 typeOf' x =
- do { () <- takeMVar lock
+ do { lock' <- evaluate lock
+    ; () <- takeMVar lock'
     ; t <- evaluate $ typeOf x
-    ; putMVar lock ()
+    ; putMVar lock' ()
     ; return t
     }
 
