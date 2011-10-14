@@ -13,7 +13,7 @@
 -----------------------------------------------------------------------------------------------
 module Data.Global.Registry (
   -- * Public Interface
-    declareIORef, declareMVar, declareTVar
+    declareIORef, declareMVar, declareEmptyMVar, declareTVar
 
   -- * Private Testing Interface
   , lookupOrInsert
@@ -64,8 +64,8 @@ lookupOrInsert
     -> String
     -> a
     -> IO (ref a)
-lookupOrInsert registry new name val
-    | registry `pseq` new `pseq` name `pseq` val `pseq` False = undefined
+lookupOrInsert registry new name _
+    | registry `pseq` new `pseq` name `pseq` False = undefined
 lookupOrInsert registry new name val = modifyMVar registry lkup
   where
     err ex got = error $ "Data.Global.Registry: Invariant violation\n"
@@ -140,6 +140,18 @@ lookupOrInsertMVar = lookupOrInsert globalRegistry newMVar
 
 
 
+lookupOrInsertEmptyMVar
+    :: forall a. Typeable a
+    => String
+    -> IO (MVar a)
+lookupOrInsertEmptyMVar name = lookupOrInsert globalRegistry newEmptyMVar' name (undefined :: a)
+  where
+    newEmptyMVar' :: a -> IO (MVar a)
+    newEmptyMVar' _ = newEmptyMVar
+{-# NOINLINE lookupOrInsertEmptyMVar #-}
+
+
+
 lookupOrInsertTVar
     :: Typeable a
     => String
@@ -161,10 +173,10 @@ lookupOrInsertTVar = lookupOrInsert globalRegistry newTVarIO
 -- pragma in order to define top-level 'IORef's.
 declareIORef
     :: Typeable a
-    => String     -- ^ The identifying name
-    -> a          -- ^ The initial value of the 'IORef', it may or may not be used.
-    -> (IORef a)  -- ^ A unique 'IORef' determined by @(name, typeOf val)@. Whether it refers
-                  -- to the given initial value or not is unspecified.
+    => String   -- ^ The identifying name
+    -> a        -- ^ The initial value of the 'IORef', it may or may not be used.
+    -> IORef a  -- ^ A unique 'IORef' determined by @(name, typeOf val)@. Whether it refers to
+                -- the given initial value or not is unspecified.
 declareIORef name val = unsafePerformIO $ lookupOrInsertIORef name val
 {-# NOINLINE declareIORef #-}
 
@@ -182,13 +194,31 @@ declareIORef name val = unsafePerformIO $ lookupOrInsertIORef name val
 -- pragma in order to define top-level 'MVar's.
 declareMVar
     :: Typeable a
-    => String    -- ^ The identifying name
-    -> a         -- ^ The initial value of the 'MVar', it may or may not be used.
-    -> (MVar a)  -- ^ A unique 'MVar' determined by @(name, typeOf val)@. Whether it refers to
-                 -- the given initial value or not is unspecified.
+    => String  -- ^ The identifying name
+    -> a       -- ^ The initial value of the 'MVar', it may or may not be used.
+    -> MVar a  -- ^ A unique 'MVar' determined by @(name, typeOf val)@. Whether it refers to
+               -- the given initial value or not is unspecified.
 declareMVar name val = unsafePerformIO $ lookupOrInsertMVar name val
 {-# NOINLINE declareMVar #-}
 
+
+-- | @declareEmptyMVar name@ maps a variable name to an 'MVar'. Calling it multiple times with
+-- the same @name@ and type of the expected 'MVar' will always return the same 'MVar'.
+--
+-- @
+-- someVar :: MVar Int
+-- someVar = declareEmptyMVar \"my-global-some-var\"
+-- @
+--
+-- Note, there is /no/ need to use 'unsafePerformIO' or to add a @{-\# NOINLINE someVar \#-}@
+-- pragma in order to define top-level 'MVar's.
+declareEmptyMVar
+    :: Typeable a
+    => String  -- ^ The identifying name
+    -> MVar a  -- ^ A unique 'MVar' determined by @(name, typeOf val)@. Whether it is still
+               -- empty depends on the rest of the program.
+declareEmptyMVar name = unsafePerformIO $ lookupOrInsertEmptyMVar name
+{-# NOINLINE declareEmptyMVar #-}
 
 
 -- | @declareTVar name val@ maps a variable name to an 'TVar'. Calling it multiple times with the same
@@ -203,9 +233,9 @@ declareMVar name val = unsafePerformIO $ lookupOrInsertMVar name val
 -- pragma in order to define top-level 'TVar's.
 declareTVar
     :: Typeable a
-    => String    -- ^ The identifying name
-    -> a         -- ^ The initial value of the 'TVar', it may or may not be used.
-    -> (TVar a)  -- ^ A unique 'TVar' determined by @(name, typeOf val)@. Whether it refers to
-                 -- the given initial value or not is unspecified.
+    => String  -- ^ The identifying name
+    -> a       -- ^ The initial value of the 'TVar', it may or may not be used.
+    -> TVar a  -- ^ A unique 'TVar' determined by @(name, typeOf val)@. Whether it refers to
+               -- the given initial value or not is unspecified.
 declareTVar name val = unsafePerformIO $ lookupOrInsertTVar name val
 {-# NOINLINE declareTVar #-}

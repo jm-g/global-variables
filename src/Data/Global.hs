@@ -46,6 +46,7 @@ module Data.Global (
   -- * Reference of Variable Declaration Functions
     declareIORef
   , declareMVar
+  , declareEmptyMVar
   , declareTVar
 
 ) where
