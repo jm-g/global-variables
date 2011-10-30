@@ -20,17 +20,17 @@ module Data.Global.Registry (
   , setupRegistry
 ) where
 
+import Control.Concurrent.MVar
+import Control.Concurrent.STM
 #if __GLASGOW_HASKELL__ < 702
 import Control.Exception       ( evaluate )
 #endif
-import Control.Concurrent.MVar
-import Control.Concurrent.STM
 import Data.IORef
 import Data.Dynamic
 import Data.Map as M
-import GHC.Conc (pseq)
+import GHC.Conc                ( pseq )
+import GHC.IO                  ( unsafePerformIO, unsafeDupablePerformIO )
 
-import System.IO.Unsafe
 
 
 #if __GLASGOW_HASKELL__ >= 702
@@ -38,6 +38,8 @@ type Registry = Map (TypeRep,TypeRep,String) Dynamic
 #else
 type Registry = Map (Int,Int,String) Dynamic
 #endif
+
+
 
 -- | Test helper
 setupRegistry :: IO (MVar Registry)
@@ -177,7 +179,7 @@ declareIORef
     -> a        -- ^ The initial value of the 'IORef', it may or may not be used.
     -> IORef a  -- ^ A unique 'IORef' determined by @(name, typeOf val)@. Whether it refers to
                 -- the given initial value or not is unspecified.
-declareIORef name val = unsafePerformIO $ lookupOrInsertIORef name val
+declareIORef name val = unsafeDupablePerformIO $ lookupOrInsertIORef name val
 {-# NOINLINE declareIORef #-}
 
 
@@ -198,7 +200,7 @@ declareMVar
     -> a       -- ^ The initial value of the 'MVar', it may or may not be used.
     -> MVar a  -- ^ A unique 'MVar' determined by @(name, typeOf val)@. Whether it refers to
                -- the given initial value or not is unspecified.
-declareMVar name val = unsafePerformIO $ lookupOrInsertMVar name val
+declareMVar name val = unsafeDupablePerformIO $ lookupOrInsertMVar name val
 {-# NOINLINE declareMVar #-}
 
 
@@ -217,7 +219,7 @@ declareEmptyMVar
     => String  -- ^ The identifying name
     -> MVar a  -- ^ A unique 'MVar' determined by @(name, typeOf val)@. Whether it is still
                -- empty depends on the rest of the program.
-declareEmptyMVar name = unsafePerformIO $ lookupOrInsertEmptyMVar name
+declareEmptyMVar name = unsafeDupablePerformIO $ lookupOrInsertEmptyMVar name
 {-# NOINLINE declareEmptyMVar #-}
 
 
@@ -237,5 +239,5 @@ declareTVar
     -> a       -- ^ The initial value of the 'TVar', it may or may not be used.
     -> TVar a  -- ^ A unique 'TVar' determined by @(name, typeOf val)@. Whether it refers to
                -- the given initial value or not is unspecified.
-declareTVar name val = unsafePerformIO $ lookupOrInsertTVar name val
+declareTVar name val = unsafeDupablePerformIO $ lookupOrInsertTVar name val
 {-# NOINLINE declareTVar #-}
